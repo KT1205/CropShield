@@ -1,185 +1,137 @@
-from flask import Flask, request, jsonify
-import tensorflow as tf
-import numpy as np
-from PIL import Image
-import io
-import json
 import os
+import sys
+import numpy as np
+import tensorflow as tf
+from flask import Flask, request, jsonify
 from flask_cors import CORS
-import base64
+from werkzeug.utils import secure_filename
+from tensorflow.keras.preprocessing import image
+
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)  # Enable cross-origin requests
 
-# Load the saved model
-MODEL_PATH = 'model.h5'
-CLASS_INDICES_PATH = 'class_indices.json'
+# Try multiple loading approaches
+def load_model_with_fallbacks():
+    try:
+        print("Attempting to load model.h5 directly...")
+        model = tf.keras.models.load_model('model.h5', compile=False)
+        print("Successfully loaded model from H5!")
+        return model
+    except Exception as e:
+        print(f"Direct H5 loading failed: {e}")
 
-# Check if model exists
-if not os.path.exists(MODEL_PATH):
-    raise FileNotFoundError(f"Model file not found at {MODEL_PATH}. Please train and save the model first.")
+# Load model using the fallback approaches
+model = load_model_with_fallbacks()
 
-# Check if class indices exist
-if not os.path.exists(CLASS_INDICES_PATH):
-    raise FileNotFoundError(f"Class indices file not found at {CLASS_INDICES_PATH}.")
+# Class names
+class_names = [
+    'Apple___Apple_scab',
+    'Apple___Black_rot',
+    'Apple___Cedar_apple_rust',
+    'Apple___healthy',
+    'Blueberry___healthy',
+    'Cherry_(including_sour)_Powdery_mildew',
+    'Cherry_(including_sour)_healthy',
+    'Corn_(maize)_Cercospora_leaf_spot Gray_leaf_spot',
+    'Corn_(maize)Common_rust',
+    'Corn_(maize)_Northern_Leaf_Blight',
+    'Corn_(maize)_healthy',
+    'Grape___Black_rot',
+    'Grape__Esca(Black_Measles)',
+    'Grape__Leaf_blight(Isariopsis_Leaf_Spot)',
+    'Grape___healthy',
+    'Orange__Haunglongbing(Citrus_greening)',
+    'Peach___Bacterial_spot',
+    'Peach___healthy',
+    'Pepper,bell__Bacterial_spot',
+    'Pepper,bell__healthy',
+    'Potato___Early_blight',
+    'Potato___Late_blight',
+    'Potato___healthy',
+    'Raspberry___healthy',
+    'Soybean___healthy',
+    'Squash___Powdery_mildew',
+    'Strawberry___Leaf_scorch',
+    'Strawberry___healthy',
+    'Tomato___Bacterial_spot',
+    'Tomato___Early_blight',
+    'Tomato___Late_blight',
+    'Tomato___Leaf_Mold',
+    'Tomato___Septoria_leaf_spot',
+    'Tomato___Spider_mites Two-spotted_spider_mite',
+    'Tomato___Target_Spot',
+    'Tomato___Tomato_Yellow_Leaf_Curl_Virus',
+    'Tomato___Tomato_mosaic_virus',
+    'Tomato___healthy'
+]
 
-# Load the model
-model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
-# Load class indices
-with open(CLASS_INDICES_PATH, 'r') as f:
-    class_names = json.load(f)
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
-def preprocess_image(image_bytes):
-    """Preprocess the image for model prediction"""
-    img = Image.open(io.BytesIO(image_bytes))
-    img = img.resize((224, 224))  # Same size as during training
-    img_array = tf.keras.preprocessing.image.img_to_array(img)
-    img_array = img_array / 255.0  # Rescale as in training
-    img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
-    return img_array
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    if 'image' not in request.files:
-        return jsonify({'error': 'No image provided'}), 400
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'})
     
-    try:
-        image_file = request.files['image']
-        image_bytes = image_file.read()
-        processed_image = preprocess_image(image_bytes)
-        
-        # Make prediction
-        predictions = model.predict(processed_image)
-        predicted_class_idx = np.argmax(predictions[0])
-        
-        # Get the class name
-        if str(predicted_class_idx) in class_names:
-            predicted_class = class_names[str(predicted_class_idx)]
-        else:
-            predicted_class = f"Unknown (Class {predicted_class_idx})"
-        
-        # Get the confidence score
-        confidence = float(predictions[0][predicted_class_idx])
-        
-        # Get top 3 predictions
-        top_indices = np.argsort(predictions[0])[-3:][::-1]
-        top_predictions = [
-            {
-                'class': class_names[str(idx)] if str(idx) in class_names else f"Unknown (Class {idx})",
-                'confidence': float(predictions[0][idx])
-            }
-            for idx in top_indices
-        ]
-        
-        return jsonify({
-            'prediction': predicted_class,
-            'confidence': confidence,
-            'top_predictions': top_predictions
-        })
+    file = request.files['file']
     
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/predict_base64', methods=['POST'])
-def predict_base64():
-    data = request.get_json()
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'})
     
-    if 'image' not in data:
-        return jsonify({'error': 'No image data provided'}), 400
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        
+        try:
+            # Preprocess the image
+            img = image.load_img(filepath, target_size=(224, 224))
+            img_array = image.img_to_array(img)
+            img_array = np.expand_dims(img_array, axis=0)
+            img_array = img_array / 255.0  # Normalize
+            
+            # Make prediction
+            predictions = model.predict(img_array)
+            predicted_class_index = np.argmax(predictions[0])
+            predicted_class = class_names[predicted_class_index]
+            confidence = float(predictions[0][predicted_class_index])
+            
+            return jsonify({
+                'class': predicted_class,
+                'confidence': confidence,
+                'all_probabilities': {class_names[i]: float(predictions[0][i]) for i in range(len(class_names))}
+            })
+        except Exception as e:
+            return jsonify({'error': f'Prediction failed: {str(e)}'})
     
-    try:
-        # Decode base64 image
-        image_data = data['image']
-        if image_data.startswith('data:image'):
-            # Remove data URI header if present
-            image_data = image_data.split(',')[1]
-        
-        image_bytes = base64.b64decode(image_data)
-        processed_image = preprocess_image(image_bytes)
-        
-        # Make prediction
-        predictions = model.predict(processed_image)
-        predicted_class_idx = np.argmax(predictions[0])
-        
-        # Get the class name
-        if str(predicted_class_idx) in class_names:
-            predicted_class = class_names[str(predicted_class_idx)]
-        else:
-            predicted_class = f"Unknown (Class {predicted_class_idx})"
-        
-        # Get the confidence score
-        confidence = float(predictions[0][predicted_class_idx])
-        
-        # Get top 3 predictions
-        top_indices = np.argsort(predictions[0])[-3:][::-1]
-        top_predictions = [
-            {
-                'class': class_names[str(idx)] if str(idx) in class_names else f"Unknown (Class {idx})",
-                'confidence': float(predictions[0][idx])
-            }
-            for idx in top_indices
-        ]
-        
-        # Prepare detailed information about the disease
-        disease_info = get_disease_info(predicted_class)
-        
-        return jsonify({
-            'prediction': predicted_class,
-            'confidence': confidence,
-            'top_predictions': top_predictions,
-            'disease_info': disease_info
-        })
-    
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-def get_disease_info(disease_name):
-    """Get additional information about a plant disease"""
-    # This is a placeholder function. In a real application, you would
-    # look up information from a database or external API.
-    
-    # Dictionary with basic information about some common plant diseases
-    disease_info_dict = {
-        "Apple___Apple_scab": {
-            "name": "Apple Scab",
-            "description": "A fungal disease that affects apple trees, causing dark, scabby lesions on leaves and fruit.",
-            "treatment": "Apply fungicides in early spring, practice good orchard sanitation, choose resistant varieties.",
-            "prevention": "Remove and destroy fallen leaves, prune to improve air circulation."
-        },
-        "Apple___Black_rot": {
-            "name": "Apple Black Rot",
-            "description": "A fungal disease that causes rotting of fruit and dark lesions on leaves and branches.",
-            "treatment": "Remove infected plant parts, apply appropriate fungicides.",
-            "prevention": "Prune out dead or diseased wood, maintain tree vigor with proper fertilization."
-        },
-        # Add more disease information as needed for your specific classes
-    }
-    
-    # Default info if disease not found in dictionary
-    default_info = {
-        "name": disease_name.replace("___", " - ").replace("_", " "),
-        "description": "Information not available for this disease.",
-        "treatment": "Consult with a local agricultural extension for specific treatment recommendations.",
-        "prevention": "Practice good plant hygiene and crop rotation."
-    }
-    
-    return disease_info_dict.get(disease_name, default_info)
-
-@app.route('/categories', methods=['GET'])
-def get_categories():
-    """Return all possible plant disease categories"""
-    categories = list(class_names.values())
-    return jsonify({
-        'categories': categories,
-        'count': len(categories)
-    })
+    return jsonify({'error': 'File type not allowed'})
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    """Health check endpoint"""
-    return jsonify({'status': 'ok', 'message': 'Plant disease classifier API is running'})
+    return jsonify({
+        'status': 'ok', 
+        'model_loaded': model is not None,
+        'tensorflow_version': tf._version_
+    })
+
+@app.route('/', methods=['GET'])
+def welcome():
+    return jsonify({
+        'message': 'Plant Disease Detection API is running',
+        'endpoints': {
+            '/predict': 'POST - Upload an image for prediction',
+            '/health': 'GET - Check API health status'
+        }
+    })
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
