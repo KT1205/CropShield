@@ -139,7 +139,7 @@ def preprocess_image(image):
 async def root():
     return {"message": "Welcome to Plant Disease Detection API"}
 
-@app.post("/predict/")
+@app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     # Check if model is loaded
     if model is None:
