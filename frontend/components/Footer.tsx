@@ -12,7 +12,7 @@ const Footer = () => {
 
           {/* GitHub Link */}
           <div>
-            <a href="https://github.com/KT1205/CropShield.git" className="text-white hover:text-green-200 transition-colors duration-200">
+            <a href="https://github.com/DarshitSorathiya/CropShield" className="text-white hover:text-green-200 transition-colors duration-200">
               <span className="sr-only">GitHub</span>
               <FaGithub className="h-6 w-6" />
             </a>

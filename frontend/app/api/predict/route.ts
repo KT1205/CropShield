@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     form.append("file", file);
 
     // Send to Flask API
-    const response = await fetch("http://127.0.0.1:5000/predict", {
+    const response = await fetch(`${process.env.API_ENDPOINT}/predict`, {
       method: "POST",
       body: form,
     });
@@ -39,14 +39,14 @@ export async function POST(req: Request) {
     // Save prediction to MongoDB
     const prediction = await Prediction.create({
       userId: decoded.id,
-      cropName: data.class,
-      result: data.class,
+      cropName: data.class_name,
+      result: data.class_name,
       imageUrl: URL.createObjectURL(file),
     });
 
     return NextResponse.json({
       success: true,
-      class: data.class,
+      class: data.class_name,
       confidence: data.confidence,
       predictionId: prediction._id,
     });

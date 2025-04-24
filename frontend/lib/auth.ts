@@ -1,10 +1,10 @@
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 
-export function getUserIdFromRequest(req: Request): string | null {
+export async function getUserIdFromRequest(req: Request): Promise<string | null> {
   try {
     // Read token from cookies
-    const token = cookies().get("token")?.value;
+    const token = (await cookies()).get("token")?.value;
     if (!token) return null;
 
     // Verify and decode token
