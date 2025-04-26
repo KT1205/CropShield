@@ -1,6 +1,10 @@
 [build]
-  publish = "webIntegration/.next"
+  base = "webIntegration"
   command = "npm run build"
+  publish = "webIntegration/.next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
 [build.environment]
   NODE_VERSION = "20"
