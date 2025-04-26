@@ -23,10 +23,17 @@ mergeConfig(nextConfig, userConfig)
 
 function mergeConfig(nextConfig, userConfig) {
   if (!userConfig) {
-    return
+    return;
   }
 
+  const isVercel = process.env.VERCEL === '1';
+
   for (const key in userConfig) {
+    if (key === 'experimental' && isVercel) {
+      // Skip experimental flags on Vercel!
+      continue;
+    }
+
     if (
       typeof nextConfig[key] === 'object' &&
       !Array.isArray(nextConfig[key])
@@ -34,11 +41,12 @@ function mergeConfig(nextConfig, userConfig) {
       nextConfig[key] = {
         ...nextConfig[key],
         ...userConfig[key],
-      }
+      };
     } else {
-      nextConfig[key] = userConfig[key]
+      nextConfig[key] = userConfig[key];
     }
   }
 }
+
 
 export default nextConfig
