@@ -1,11 +1,6 @@
 [build]
-  base = "webIntegration"
-  command = "npm run build"
-  publish = "webIntegration/.next"
-  NODE_OPTIONS = "--max-old-space-size=4096"
-
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
+  command = "npm install && npm run build"
+  publish = ".next"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "18"
