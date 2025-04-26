@@ -2,6 +2,9 @@
   "name": "my-v0-project",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "20"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -52,7 +55,7 @@
     "lucide-react": "^0.454.0",
     "mongoose": "^8.12.1",
     "my-v0-project": "file:",
-    "next": "14.2.16",
+    "next": "14.2.3",
     "next-themes": "latest",
     "react": "^18",
     "react-day-picker": "8.10.1",

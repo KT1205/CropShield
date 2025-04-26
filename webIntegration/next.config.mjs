@@ -1,6 +1,6 @@
 let userConfig = undefined;
 try {
-  userConfig = await import('./v0-user-next.config');
+  userConfig = await import("./v0-user-next.config");
 } catch (e) {
   // ignore error
 }
@@ -32,15 +32,15 @@ function mergeConfig(nextConfig, userConfig) {
     return;
   }
 
-  const isVercel = process.env.VERCEL === '1';
+  const isVercel = process.env.VERCEL === "1";
 
   for (const key in userConfig) {
-    if (key === 'experimental' && isVercel) {
+    if (key === "experimental" && isVercel) {
       continue; // Ignore experimental flags on Vercel
     }
 
     if (
-      typeof nextConfig[key] === 'object' &&
+      typeof nextConfig[key] === "object" &&
       !Array.isArray(nextConfig[key])
     ) {
       nextConfig[key] = {
