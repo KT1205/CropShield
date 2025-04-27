@@ -1,12 +1,13 @@
 {
-  "name": "cropshield",
+  "name": "my-v0-project",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "export": "next export"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
@@ -41,10 +42,10 @@
     "autoprefixer": "^10.4.20",
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
+    "cloudinary": "^2.6.0",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
     "cookies-next": "^2.0.2",
-    "cropshield": "file:",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "8.5.1",
     "framer-motion": "latest",
@@ -75,6 +76,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "postcss": "^8",
+    "rimraf": "^6.0.1",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"
   }

@@ -1,7 +1,14 @@
+import { v2 as cloudinary } from "cloudinary";
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Prediction from "@/models/Prediction";
 import jwt from "jsonwebtoken";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function POST(req: Request) {
   try {
@@ -24,11 +31,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
-    // Convert file to Blob for sending to Flask
+    // Upload image to Cloudinary
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const imageUrl = await new Promise<string>((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: "CropShield" },
+        (error, result) => {
+          if (error) {
+            reject(error);
+          } else if (result) {
+            resolve(result.secure_url);
+          }
+        }
+      );
+      const stream = uploadStream;
+      stream.write(buffer);
+      stream.end();
+    });
+
+    // Send image to Flask API
     const form = new FormData();
     form.append("file", file);
 
-    // Send to Flask API
     const response = await fetch(`${process.env.API_ENDPOINT}/predict`, {
       method: "POST",
       body: form,
@@ -39,15 +63,15 @@ export async function POST(req: Request) {
     // Save prediction to MongoDB
     const prediction = await Prediction.create({
       userId: decoded.id,
-      cropName: data.class_name,
-      result: data.class_name,
-      imageUrl: URL.createObjectURL(file),
+      cropName: data.prediction.class_name,
+      result: data.prediction.class_name,
+      imageUrl: imageUrl, // Use Cloudinary URL
     });
 
     return NextResponse.json({
       success: true,
-      class: data.class_name,
-      confidence: data.confidence,
+      class: data.prediction.class_name,
+      confidence: data.prediction.confidence,
       predictionId: prediction._id,
     });
   } catch (error) {

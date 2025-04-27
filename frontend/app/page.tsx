@@ -190,70 +190,72 @@ export default function Home() {
   };
 
   return (
-    <div className='container mx-auto px-4 py-12'>
-      <Toaster position='top-right' reverseOrder={false} />
+    <div className="container mx-auto px-4 py-12">
+      <Toaster position="top-right" reverseOrder={false} />
 
       <motion.h1
-        className='text-5xl font-bold text-center mb-12 text-green-700 dark:text-green-300'
+        className="text-5xl font-bold text-center mb-12 text-green-700 dark:text-green-300"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}>
+        transition={{ duration: 0.5 }}
+      >
         CropShield
       </motion.h1>
 
       <motion.div
-        className='max-w-md mx-auto bg-white/20 dark:bg-black/20 backdrop-blur-lg rounded-xl shadow-2xl overflow-hidden'
+        className="max-w-md mx-auto bg-white/20 dark:bg-black/20 backdrop-blur-lg rounded-xl shadow-2xl overflow-hidden"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}>
-        <form onSubmit={handleAuthSubmit} className='p-6 space-y-4'>
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <form onSubmit={handleAuthSubmit} className="p-6 space-y-4">
           <input
-            type='text'
-            placeholder='Username'
+            type="text"
+            placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className='w-full p-3 rounded bg-green-800 text-white focus:outline-none focus:ring-2 focus:ring-green-400'
+            className="w-full p-3 rounded bg-green-800 text-white focus:outline-none focus:ring-2 focus:ring-green-400"
           />
           {!isLogin && (
             <input
-              type='email'
-              placeholder='Email'
+              type="email"
+              placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className='w-full p-3 rounded bg-green-800 text-white focus:outline-none focus:ring-2 focus:ring-green-400'
+              className="w-full p-3 rounded bg-green-800 text-white focus:outline-none focus:ring-2 focus:ring-green-400"
             />
           )}
           <input
-            type='password'
-            placeholder='Password'
+            type="password"
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className='w-full p-3 rounded bg-green-800 text-white focus:outline-none focus:ring-2 focus:ring-green-400'
+            className="w-full p-3 rounded bg-green-800 text-white focus:outline-none focus:ring-2 focus:ring-green-400"
           />
 
           <motion.button
-            type='submit'
+            type="submit"
             className={`w-full ${
               loading
                 ? "bg-green-400 cursor-not-allowed"
                 : "bg-green-600 hover:bg-green-700"
             } text-white font-bold py-3 px-4 rounded-md shadow-lg`}
             whileTap={{ scale: loading ? 1 : 0.95 }}
-            disabled={loading}>
+            disabled={loading}
+          >
             {loading ? "Processing..." : isLogin ? "Login" : "Signup"}
           </motion.button>
 
           <p
-            className='text-center text-sm mt-4 cursor-pointer text-green-500'
+            className="text-center text-sm mt-4 cursor-pointer text-green-500"
             onClick={() => {
               setIsLogin(!isLogin);
               setUsername("");
               setPassword("");
               setEmail("");
-            }}>
-            {isLogin
-              ? "Need an account? Signup"
-              : "Already have an account? Login"}
+            }}
+          >
+            {isLogin ? "Need an account? Signup" : "Already have an account? Login"}
           </p>
         </form>
       </motion.div>

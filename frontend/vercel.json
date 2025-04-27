@@ -1,3 +1,8 @@
 {
-  "builds": [{ "src": "frontend/next.config.mjs", "use": "@vercel/next" }]
-}
+    "build": {
+      "env": {
+        "NODE_VERSION": "20"
+      }
+    }
+  }
+  
