@@ -1,11 +1,13 @@
-"use client"
+"use client";
 
-import { motion } from "framer-motion"
-import { useRouter } from "next/navigation"
-import Image from "next/image"
+import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { useState } from "react";
 
 export default function Predict() {
-  const router = useRouter()
+  const router = useRouter();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const predictionResult = {
     cropName: "Wheat",
@@ -16,7 +18,16 @@ export default function Predict() {
       "Monitor for any signs of pest activity",
       "Plan for harvest in approximately 2 weeks",
     ],
-  }
+  };
+
+  const handleAnalyzeClick = async () => {
+    setIsProcessing(true);
+
+    // Simulate the processing (replace this with actual prediction logic)
+    setTimeout(() => {
+      setIsProcessing(false); // After processing, you can set the result here
+    }, 3000); // Simulate a 3-second processing time
+  };
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -36,7 +47,7 @@ export default function Predict() {
       >
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-semibold text-gray-800 dark:text-gray-200">{predictionResult.cropName}</h2>
+            <h2 className="text-3xl font-semibold text-black dark:text-white">{predictionResult.cropName}</h2>
             <span
               className={`text-lg font-semibold px-3 py-1 rounded-full ${
                 predictionResult.health === "Healthy"
@@ -48,7 +59,13 @@ export default function Predict() {
             </span>
           </div>
           <div className="mb-6">
-            <Image src="/placeholder.svg" alt="Analyzed crop image" width={500} height={300} className="rounded-lg" />
+            <Image
+              src="/placeholder.svg"
+              alt="Analyzed crop image"
+              width={500}
+              height={300}
+              className="rounded-lg"
+            />
           </div>
           <div className="mb-6">
             <h3 className="text-xl font-semibold mb-2 text-gray-700 dark:text-gray-300">Confidence</h3>
@@ -73,16 +90,16 @@ export default function Predict() {
         </div>
         <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4">
           <motion.button
-            onClick={() => router.push("/")}
+            onClick={handleAnalyzeClick}
             className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md transition-colors duration-200"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            Analyze Another Image
+            {isProcessing ? "Processing..." : "Analyze Another Image"}
           </motion.button>
         </div>
       </motion.div>
     </div>
-  )
+  );
 }
 
