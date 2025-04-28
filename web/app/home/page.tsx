@@ -10,6 +10,7 @@ export default function Home() {
   const [prediction, setPrediction] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -51,6 +52,8 @@ export default function Home() {
       return;
     }
 
+    setIsProcessing(true);
+
     const formData = new FormData();
     formData.append("file", selectedFile);
 
@@ -58,7 +61,7 @@ export default function Home() {
       const response = await fetch("/api/predict", {
         method: "POST",
         body: formData,
-        credentials: "include", // Important for sending cookies
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -71,6 +74,8 @@ export default function Home() {
       }
     } catch (err) {
       setError("Error connecting to API.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -82,30 +87,33 @@ export default function Home() {
   };
 
   return (
-    <div className='container mx-auto px-4 py-12'>
+    <div className="container mx-auto px-4 py-12">
       <motion.h1
-        className='text-5xl font-bold text-center mb-12 text-green-700 dark:text-green-300'
+        className="text-5xl font-bold text-center mb-12 text-green-700 dark:text-green-300"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}>
+        transition={{ duration: 0.5 }}
+      >
         {username ? `Welcome, ${username}!` : "CropShield"}
       </motion.h1>
 
       <motion.div
-        className='max-w-md mx-auto bg-white/20 dark:bg-black/20 backdrop-blur-lg rounded-xl shadow-2xl overflow-hidden'
+        className="max-w-md mx-auto bg-white/20 dark:bg-black/20 backdrop-blur-lg rounded-xl shadow-2xl overflow-hidden"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}>
-        <div className='p-6 space-y-6'>
-          <div className='mb-6'>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <div className="p-6 space-y-6">
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Upload an image of your crop
             </label>
             <div
-              className='mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md bg-white/50 dark:bg-black/50'
+              className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md bg-white/50 dark:bg-black/50"
               onDrop={handleDrop}
-              onDragOver={handleDragOver}>
-              <div className='space-y-1 text-center'>
+              onDragOver={handleDragOver}
+            >
+              <div className="space-y-1 text-center">
                 <AnimatePresence>
                   {!previewUrl ? (
                     <motion.div
@@ -113,17 +121,18 @@ export default function Home() {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       onClick={() => fileInputRef.current?.click()}
-                      className='cursor-pointer'>
-                      <FaCloudUploadAlt className='mx-auto h-12 w-12 text-gray-400' />
-                      <p className='text-sm text-gray-600 dark:text-gray-400'>
+                      className="cursor-pointer"
+                    >
+                      <FaCloudUploadAlt className="mx-auto h-12 w-12 text-gray-400" />
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         Drag and drop or click to select a file
                       </p>
                     </motion.div>
                   ) : (
                     <motion.img
                       src={previewUrl}
-                      alt='Preview'
-                      className='mx-auto h-32 w-auto object-cover rounded cursor-pointer'
+                      alt="Preview"
+                      className="mx-auto h-32 w-auto object-cover rounded cursor-pointer"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
@@ -132,10 +141,10 @@ export default function Home() {
                   )}
                 </AnimatePresence>
                 <input
-                  type='file'
-                  accept='image/*'
+                  type="file"
+                  accept="image/*"
                   onChange={handleFileChange}
-                  className='sr-only'
+                  className="sr-only"
                   ref={fileInputRef}
                 />
               </div>
@@ -144,27 +153,34 @@ export default function Home() {
 
           <motion.button
             onClick={prediction ? resetFile : handleUpload}
-            className='w-full bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105 active:scale-95 duration-300'
+            className="w-full bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105 active:scale-95 duration-300"
             whileHover={{ scale: 1.05, boxShadow: "0 0 8px rgba(0,255,0,0.5)" }}
             whileTap={{ scale: 0.95 }}
-            disabled={!selectedFile}>
-            {prediction ? "Choose Another Image" : "Predict"}
+            disabled={!selectedFile || isProcessing}
+          >
+            {isProcessing
+              ? "Processing..."
+              : prediction
+              ? "Choose Another Image"
+              : "Predict"}
           </motion.button>
 
           {prediction && (
             <motion.p
-              className='mt-4 text-lg font-semibold text-green-700 dark:text-green-400 text-center'
+              className="mt-4 text-lg font-semibold text-green-700 dark:text-green-400 text-center"
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}>
+              animate={{ opacity: 1 }}
+            >
               {prediction}
             </motion.p>
           )}
 
           {error && (
             <motion.p
-              className='mt-4 text-lg font-semibold text-red-700 dark:text-red-400 text-center'
+              className="mt-4 text-lg font-semibold text-red-700 dark:text-red-400 text-center"
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}>
+              animate={{ opacity: 1 }}
+            >
               {error}
             </motion.p>
           )}
